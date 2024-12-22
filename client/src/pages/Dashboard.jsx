@@ -36,7 +36,7 @@ const LoadingModal = ({ message, progress }) => (
 );
 
 export default function Dashboard() {
-  const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedOption, setSelectedOption] = useState('website');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [websiteContent, setWebsiteContent] = useState('');
   const [analysisData, setAnalysisData] = useState(null);
@@ -515,31 +515,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Visitor Map */}
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">Global Visitor Distribution</h3>
-        <div className="h-[400px]">
-          <ComposableMap>
-            <Geographies geography="/path-to-your-topojson">
-              {({ geographies }) =>
-                geographies.map((geo) => (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill="#D6D6DA"
-                    stroke="#FFFFFF"
-                    style={{
-                      default: { outline: 'none' },
-                      hover: { fill: '#F53', outline: 'none' },
-                      pressed: { outline: 'none' },
-                    }}
-                  />
-                ))
-              }
-            </Geographies>
-          </ComposableMap>
-        </div>
-      </div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

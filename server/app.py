@@ -276,7 +276,7 @@ def scrape_content(url):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers,timeout=10)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -314,10 +314,13 @@ def comp_analyze():
         competitor_content2 = scrape_content(competitor_url2)
 
         if "Error while scraping" in target_content:
+            print("target error comp")
             return jsonify({"error": target_content}), 400
         if "Error while scraping" in competitor_content1:
+            print("comp1 error comp")
             return jsonify({"error": competitor_content1}), 400
         if "Error while scraping" in competitor_content2:
+            print("comp2 error comp")
             return jsonify({"error": competitor_content2}), 400
 
         prompt = (
