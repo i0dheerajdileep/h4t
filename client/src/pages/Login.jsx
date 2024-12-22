@@ -1,22 +1,35 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
-    alert(`Logged in with Email: ${email}`);
-    // Add your login logic here
+    setError("");
+    
+    if (email === "i.dheerajdileep@gmail.com" && password === "password") {
+      navigate("/dashboard");
+    } else {
+      setError("Invalid credentials. Please try again.");
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-400 to-purple-500">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500">
+      <div className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-8 space-y-6">
+        <h2 className="text-4xl font-bold text-gray-800 text-center mb-8">
           Welcome Back
         </h2>
-        <form onSubmit={handleLogin}>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleLogin} className="space-y-6">
           <div className="mb-4">
             <label
               htmlFor="email"
@@ -46,21 +59,21 @@ function Login() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               placeholder="Enter your password"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white font-semibold py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400"
           >
             Login
           </button>
         </form>
-        <p className="text-center text-gray-600 mt-4">
+        <p className="text-center text-gray-600 mt-6">
           Don't have an account?{" "}
-          <a href="#" className="text-blue-500 hover:underline">
+          <a href="#" className="text-purple-600 hover:text-purple-800 font-medium hover:underline transition-colors">
             Sign Up
           </a>
         </p>

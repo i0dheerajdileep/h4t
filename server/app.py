@@ -270,10 +270,155 @@ def analyze():
     except Exception as e:
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
+
+def scrape_content(url):
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Extract main content elements
+        landing_content = []
+        header = soup.find('header')
+        if header:
+            landing_content.append(header)
+        navbar = soup.find('nav')
+        if navbar:
+            landing_content.append(navbar)
+        main_content = soup.find(['section', 'div'])
+        if main_content:
+            landing_content.append(main_content)
+
+        visible_content = '\n'.join([element.prettify() for element in landing_content])
+        truncated_content = '\n'.join(visible_content.splitlines()[:50])
+
+        return truncated_content if truncated_content else None
+    except Exception as e:
+        return f"Error while scraping {url}: {e}"
+
+@app.route('/comp-analysis', methods=['POST'])
+def comp_analyze():
+    try:
+        target_url = request.form.get('target_url')
+        competitor_url1 = request.form.get('competitor_url1')
+        competitor_url2 = request.form.get('competitor_url2')
+
+        if not (target_url and competitor_url1 and competitor_url2):
+            return jsonify({"error": "All three URLs are required"}), 400
+
+        target_content = scrape_content(target_url)
+        competitor_content1 = scrape_content(competitor_url1)
+        competitor_content2 = scrape_content(competitor_url2)
+
+        if "Error while scraping" in target_content:
+            return jsonify({"error": target_content}), 400
+        if "Error while scraping" in competitor_content1:
+            return jsonify({"error": competitor_content1}), 400
+        if "Error while scraping" in competitor_content2:
+            return jsonify({"error": competitor_content2}), 400
+
+        prompt = (
+            "You are a CRO analyst. Analyze these three websites and provide detailed scoring for each one. "
+            "For each website, assign numerical scores (0-100) for design, usability, and conversion potential, "
+            "with detailed notes explaining each score. Compare their strengths and weaknesses. "
+            "Return the analysis in this exact JSON structure:\n\n"
+            '{'
+            '"schema_version": "1.0",'
+            '"analysis_type": "competitive_cro",'
+            '"target_website": {'  # First website
+            '"url": "",'
+            '"name": "",'
+            '"scores": {'
+            '"design": {"score": 0, "notes": ""},'
+            '"usability": {"score": 0, "notes": ""},'
+            '"conversion": {"score": 0, "notes": ""}'
+            '},'
+            '"improvements": ['
+            '{"issue": "", "solution": "", "priority": ""}'
+            ']'
+            '},'
+            '"competitor_1": {'  # Second website
+            '"url": "",'
+            '"name": "",'
+            '"scores": {'
+            '"design": {"score": 0, "notes": ""},'
+            '"usability": {"score": 0, "notes": ""},'
+            '"conversion": {"score": 0, "notes": ""}'
+            '},'
+            '"strengths": [],'
+            '"weaknesses": []'
+            '},'
+            '"competitor_2": {'  # Third website
+            '"url": "",'
+            '"name": "",'
+            '"scores": {'
+            '"design": {"score": 0, "notes": ""},'
+            '"usability": {"score": 0, "notes": ""},'
+            '"conversion": {"score": 0, "notes": ""}'
+            '},'
+            '"strengths": [],'
+            '"weaknesses": []'
+            '},'
+            '"market_analysis": {'
+            '"trends": [],'
+            '"opportunities": [],'
+            '"threats": []'
+            '}'
+            '}'
+        )
+
+        content_to_analyze = f"""
+        Target Website:
+        {target_content}
+
+        Competitor 1 Website:
+        {competitor_content1}
+
+        Competitor 2 Website:
+        {competitor_content2}
+        """
+
+        # Update OpenAI API call to use new client style
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "You are a CRO analyst. Return only a clean JSON object without any escape characters or formatting. Do not wrap the response in additional JSON structures."
+                },
+                {
+                    "role": "user", 
+                    "content": f"Analyze these websites and return a JSON response matching exactly this structure: {prompt}\n\nContent to analyze: {content_to_analyze}"
+                }
+            ],
+            temperature=0.3  # Lower temperature for more consistent output
+        )
+
+        # Clean and parse the response
+        output = response.choices[0].message.content.strip()
+        
+        # Remove any markdown formatting
+        if "```" in output:
+            output = output.replace("```json", "").replace("```", "").strip()
+        
+        # Parse JSON and return directly (no additional wrapping)
+        try:
+            parsed_json = json.loads(output)
+            return jsonify(parsed_json), 200
+        except json.JSONDecodeError as e:
+            return jsonify({"error": "Invalid JSON response", "details": str(e)}), 500
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     # Get port from environment variable or default to 5000
     port = int(os.environ.get('PORT', 5000))
     # Run the app in debug mode if not in production
     debug = os.environ.get('FLASK_ENV', 'development') == 'development'
     app.run(host='0.0.0.0', port=port, debug=debug)
-
